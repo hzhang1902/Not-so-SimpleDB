@@ -791,13 +791,13 @@ properly when trying to insert to a fully pinned buffer pool.
 
 
 ## Design
-The tests are designed to be independent and test one functionality each. 
+The tests are designed to be independent and each tests only one functionality. 
 All functionalities of each replacement policy are tested with multiples of 
-these tests, and a full test that simulates real life usage is done to 
+these tests, and a full test simulating real life usage is done to 
 make sure they are stable.
 
-The full test focused on letting two policies get different 
-results. This is where that access b4 in the middle came from. The header 
+The full test focuses on letting two policies get different 
+results. This is where `access b4` in the middle comes from. The header 
 is before buffer 3 but after 1, so buffer 3's ref bit will be set to 0 before 
 buffer 1's, and buffer 3 will be replaced. For LRU, since buffer 
 3 is accessed more recently than buffer 1, so buffer 1 will be replaced.
