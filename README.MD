@@ -7,10 +7,10 @@
 ## Installation Instructions
 
 1. Install the Java SDK, level 1.6 or higher.
-2. Import project into Eclipse/Intellij and follow the steps in the course instructions 
-(Intellij: https://canvas.wpi.edu/courses/6652/files/1128816/download?download_frd=1, 
-Eclipse: https://canvas.wpi.edu/courses/6652/files/1095108/download?download_frd=1), 
+2. Import project into Eclipse/Intellij and follow the steps in the course instructions, 
 except no need to create `src` folder and drag stuffs in.
+(Intellij: https://canvas.wpi.edu/courses/6652/files/1128816/download?download_frd=1, 
+Eclipse: https://canvas.wpi.edu/courses/6652/files/1095108/download?download_frd=1)
 3. Mark `tests` folder as Test Sources Root.
 
 
@@ -53,3 +53,5 @@ database server ready
 4. Right click ReplacementPolicyTest.java and click on
 `Run ReplacementPolicyTest.main()` to run replacement policy test.
 5. Delete `cs4432DB` directory
+
+For details see `TESTING.MD`.
