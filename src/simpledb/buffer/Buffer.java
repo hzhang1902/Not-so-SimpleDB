@@ -14,7 +14,7 @@ import simpledb.file.*;
  * @author Edward Sciore
  */
 public class Buffer {
-    public final int id;
+    public final Integer id;
     private Page contents = new Page();
     private Block blk = null;
     private int pins = 0;
@@ -131,7 +131,7 @@ public class Buffer {
     * Increases the buffer's pin count.
     */
     void pin() {
-        System.out.println(""+this.id+" pin");
+        System.out.println("pin "+this.id);
         pins++;
    }
 
@@ -139,7 +139,7 @@ public class Buffer {
      * Decreases the buffer's pin count.
      */
     void unpin() {
-        System.out.println(""+this.id+" unpin");
+        System.out.println("unpin "+this.id);
         pins--;
    }
 

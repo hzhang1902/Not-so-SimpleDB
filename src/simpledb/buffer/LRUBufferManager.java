@@ -8,7 +8,7 @@ import java.util.Stack;
 public class LRUBufferManager implements BufferManager {
     protected LRUBuffer[] bufferpool;
     private HashMap<Integer, Integer> usedbuffer = new HashMap<>();
-    private Stack<Integer> freebuffer = new Stack<>();
+    private HashMap<Integer, Integer> freebuffer = new HashMap<>();
     private int numAvailable;
 
     /**
@@ -21,8 +21,9 @@ public class LRUBufferManager implements BufferManager {
         numAvailable = numbuffs;
         for (int i=0; i<numbuffs; i++) {
             bufferpool[i]= new LRUBuffer(i);
-            freebuffer.add(i);
+            freebuffer.put(i, null);
         }
+//        System.out.println(freebuffer.toString());
     }
 
     synchronized public void flushAll(int txnum) {
@@ -46,9 +47,11 @@ public class LRUBufferManager implements BufferManager {
                 return null;
             System.out.println("replace: "+unpinnedBufferIndex);
             buff = bufferpool[unpinnedBufferIndex];
+
             if (buff.block() != null) {
                 usedbuffer.remove(buff.block().hashCode(), unpinnedBufferIndex);
             }
+
             usedbuffer.put(blk.hashCode(), buff.id);
             buff.assignToBlock(blk);
         } else {
@@ -56,8 +59,10 @@ public class LRUBufferManager implements BufferManager {
         }
         if (!buff.isPinned()) {
             numAvailable--;
+            freebuffer.remove(buff.id);
         }
         buff.pin();
+//        System.out.println(freebuffer.toString());
         System.out.println(toString());
         return buff;
     }
@@ -74,7 +79,9 @@ public class LRUBufferManager implements BufferManager {
         Block keyBlock = buff.assignToNew(filename, fmtr);
         usedbuffer.put(keyBlock.hashCode(), unpinnedBufferIndex);
         numAvailable--;
+        freebuffer.remove(buff.id);
         buff.pin();
+//        System.out.println(freebuffer.toString());
         System.out.println(toString());
         return buff;
     }
@@ -82,10 +89,11 @@ public class LRUBufferManager implements BufferManager {
     synchronized public void unpin(Buffer buff) {
         buff.unpin();
         if (!buff.isPinned()) {
-            freebuffer.push(buff.id);
+            freebuffer.put(buff.id, null);
             numAvailable++;
         }
         System.out.println(toString());
+//        System.out.println(freebuffer.toString());
     }
 
     /**
@@ -108,18 +116,13 @@ public class LRUBufferManager implements BufferManager {
         Integer index = null;
         Long currentTime = System.nanoTime();
         long max = 0;
-        for (Integer i : freebuffer) {
+        for (Integer i : freebuffer.keySet()) {
             LRUBuffer buff = bufferpool[i];
-            if (!buff.isPinned()){
-                long accessAgo = currentTime - buff.lastAccessed;
-                if (accessAgo > max) {
-                    max = accessAgo;
-                    index = i;
-                }
+            long accessAgo = currentTime - buff.lastAccessed;
+            if (accessAgo > max) {
+                max = accessAgo;
+                index = i;
             }
-        }
-        if (index != null) {
-            freebuffer.remove(index);
         }
         return index;
     }

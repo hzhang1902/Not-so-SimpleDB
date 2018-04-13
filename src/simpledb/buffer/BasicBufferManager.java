@@ -13,7 +13,7 @@ import java.util.Stack;
 class BasicBufferManager implements BufferManager {
     private Buffer[] bufferpool;
     private HashMap<Integer, Integer> usedbuffer = new HashMap<>();
-    private Stack<Integer> freebuffer = new Stack<>();
+    private HashMap<Integer, Integer> freebuffer = new HashMap<>();
     private int numAvailable;
 
     /**
@@ -35,8 +35,9 @@ class BasicBufferManager implements BufferManager {
         numAvailable = numbuffs;
         for (int i = 0; i < numbuffs; i++) {
             bufferpool[i] = new Buffer(i);
-            freebuffer.push(i);
+            freebuffer.put(i, null);
         }
+//        System.out.println(freebuffer.toString());
     }
 
 
@@ -50,6 +51,7 @@ class BasicBufferManager implements BufferManager {
 
 
     public synchronized Buffer pin(Block blk) {
+        //System.out.println("pin blk");
         Integer existingBufferIndex = findExistingBuffer(blk);
         Buffer buff;
         if (existingBufferIndex == null) {
@@ -57,24 +59,29 @@ class BasicBufferManager implements BufferManager {
             if (unpinnedBufferIndex == null)
                 return null;
             buff = bufferpool[unpinnedBufferIndex];
+
             if (buff.block() != null) {
                 usedbuffer.remove(buff.block().hashCode(), unpinnedBufferIndex);
             }
-            usedbuffer.put(blk.hashCode(), buff.id);
+
             buff.assignToBlock(blk);
+            usedbuffer.put(blk.hashCode(), unpinnedBufferIndex);
         } else {
             buff = bufferpool[existingBufferIndex];
         }
         if (!buff.isPinned()) {
             numAvailable--;
+            freebuffer.remove(buff.id);
         }
         buff.pin();
+//        System.out.println(freebuffer.toString());
         System.out.println(toString());
         return buff;
     }
 
 
     public synchronized Buffer pinNew(String filename, PageFormatter fmtr) {
+        //System.out.println("pin new");
         Integer unpinnedBufferIndex = chooseUnpinnedBuffer();
         if (unpinnedBufferIndex == null)
             return null;
@@ -82,10 +89,13 @@ class BasicBufferManager implements BufferManager {
         if (buff.block() != null) {
             usedbuffer.remove(buff.block().hashCode(), unpinnedBufferIndex);
         }
-        Block keyBlock = buff.assignToNew(filename, fmtr);
-        usedbuffer.put(keyBlock.hashCode(), unpinnedBufferIndex);
+        Block newBlock = buff.assignToNew(filename, fmtr);
+        usedbuffer.put(newBlock.hashCode(), unpinnedBufferIndex);
         numAvailable--;
+        freebuffer.remove(buff.id);
         buff.pin();
+
+//        System.out.println(freebuffer.toString());
         System.out.println(toString());
         return buff;
     }
@@ -93,9 +103,10 @@ class BasicBufferManager implements BufferManager {
     public synchronized void unpin(Buffer buff) {
         buff.unpin();
         if (!buff.isPinned()) {
-            freebuffer.push(buff.id);
+            freebuffer.put(buff.id, 0);
             numAvailable++;
         }
+//        System.out.println(freebuffer.toString());
         System.out.println(toString());
     }
 
@@ -120,7 +131,7 @@ class BasicBufferManager implements BufferManager {
      * @return index of an unpinned buffer in bufferpool
      */
     private Integer chooseUnpinnedBuffer() {
-        return freebuffer.pop();
+        return freebuffer.keySet().iterator().next();
     }
 
     /**
